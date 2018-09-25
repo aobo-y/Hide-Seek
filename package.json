@@ -21,5 +21,14 @@
   "bugs": {
     "url": "https://github.com/aobo-y/Hide-Seek/issues"
   },
-  "homepage": "https://github.com/aobo-y/Hide-Seek#readme"
+  "homepage": "https://github.com/aobo-y/Hide-Seek#readme",
+  "dependencies": {
+    "bootstrap": "^4.1.3",
+    "highcharts": "^6.1.3",
+    "jquery": "^3.3.1",
+    "socket.io-client": "^2.1.1",
+    "springy": "^2.8.0",
+    "store": "^2.0.12",
+    "tether": "^1.4.4"
+  }
 }
