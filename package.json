@@ -1,0 +1,25 @@
+{
+  "name": "hide-seek",
+  "version": "1.0.0",
+  "description": "Intent-aware Query Obfuscation Privacy Protection Chrome Extension",
+  "main": "config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aobo-y/Hide-Seek.git"
+  },
+  "keywords": [
+    "privacy",
+    "protection",
+    "intent-aware",
+    "obfuscation"
+  ],
+  "author": "UVA HCDM",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/aobo-y/Hide-Seek/issues"
+  },
+  "homepage": "https://github.com/aobo-y/Hide-Seek#readme"
+}
