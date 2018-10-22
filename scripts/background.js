@@ -178,8 +178,9 @@ var addQuery = function(queryCollection, query) {
 saveQueries();
 
 // simulate search
-var keywordsPools = [],
-    simulateKeyword, simulateTab;
+var keywordsPools = [];
+var simulateKeyword;
+var simulateTab;
 var simulateSearch = function() {
     if (simulateTab) {
         return;

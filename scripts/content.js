@@ -24,11 +24,10 @@ $(function() {
     }
 
     var autoSearch = function(keyword) {
-        $('#lst-ib').val(keyword);
-        setInterval(function() {
-            $('#lst-ib').blur();
-            $('#tsf').submit();
-        }, 1000);
+        const input = document.getElementsByClassName('gLFyf gsfi')[0];
+        const submit = document.getElementsByName('btnK')[0];
+        input.value = keyword;
+        submit.click();
     }
 
     if (href.indexOf('www.google.com.hk/search') != -1 || href.indexOf('www.google.com/search') != -1 || href.indexOf('www.google.ca/search') != -1 || href.indexOf('www.google.co.uk/search') != -1) {
