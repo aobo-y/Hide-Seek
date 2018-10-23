@@ -4,11 +4,11 @@
   "manifest_version": 2,
   "description": "An intent-aware privacy protection extension for personalized web search.",
   "icons": {
-    "16": "images/google.png",
-    "128": "images/google.png"
+    "16": "src/images/google.png",
+    "128": "src/images/google.png"
   },
   "background": {
-    "page": "background.html"
+    "page": "src/background.html"
   },
   "permissions": [
     "tabs",
@@ -33,20 +33,20 @@
     "webRequest",
     "webRequestBlocking"
   ],
-  "options_page": "options.html",
+  "options_page": "src/options.html",
   "options_ui": {
-    "page": "options.html",
+    "page": "src/options.html",
     "chrome_style": true,
     "open_in_tab": false
   },
   "content_scripts": [{
     "all_frames": false,
     "css": [
-      "styles/fonts.css"
+      "src/styles/fonts.css"
     ],
     "js": [
       "node_modules/jquery/dist/jquery.min.js",
-      "scripts/content.js"
+      "src/scripts/content.js"
     ],
     "matches": [
       "http://www.google.com.hk/*",
@@ -64,14 +64,13 @@
   },
   "browser_action": {
     "default_icon": {
-      "19": "images/google.png",
-      "38": "images/google.png"
+      "19": "src/images/google.png",
+      "38": "src/images/google.png"
     },
     "default_title": "google",
-    "default_popup": "popup.html"
+    "default_popup": "src/popup.html"
   },
   "web_accessible_resources": [
-    "images/google.png",
-    "bower_components/**/*.*"
+    "src/images/google.png"
   ]
 }
