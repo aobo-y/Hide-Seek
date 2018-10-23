@@ -2,8 +2,8 @@
   "name": "hide-seek",
   "version": "1.0.0",
   "description": "Intent-aware Query Obfuscation Privacy Protection Chrome Extension",
-  "main": "config.js",
   "scripts": {
+    "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -29,5 +29,9 @@
     "springy": "^2.8.0",
     "store": "^2.0.12",
     "tether": "^1.4.4"
+  },
+  "devDependencies": {
+    "webpack": "^4.22.0",
+    "webpack-cli": "^3.1.2"
   }
 }
