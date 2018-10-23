@@ -1,3 +1,9 @@
+import $ from 'jquery';
+import Springy from 'springy';
+import 'springy/springyui.js';
+import 'bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
 $(document).ready(function() {
   var canvas = document.getElementById("my_canvas");
   canvas.width = $("#viz").width() * 0.8;

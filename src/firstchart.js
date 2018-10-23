@@ -1,4 +1,11 @@
-'use strict';
+import $ from 'jquery';
+import store from 'store';
+import Highcharts from 'highcharts';
+import hcDrilldown from 'highcharts/modules/drilldown.js';
+import hcWordcloud from 'highcharts/modules/wordcloud.js';
+
+hcDrilldown(Highcharts);
+hcWordcloud(Highcharts);
 
 //extra css style
 Highcharts.createElement('link', {

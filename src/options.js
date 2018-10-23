@@ -1,4 +1,5 @@
-'use strict';
+import $ from 'jquery';
+import store from 'store';
 
 var bgp = chrome.extension.getBackgroundPage();
 var popupSettings = store.get('popupSettings');

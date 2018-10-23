@@ -1,3 +1,6 @@
+import $ from 'jquery';
+import store from 'store';
+
 $(function() {
   var acc = $(".accordion");
   var i;
