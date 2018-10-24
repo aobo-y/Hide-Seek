@@ -4,6 +4,7 @@
   "description": "Intent-aware Query Obfuscation Privacy Protection Chrome Extension",
   "scripts": {
     "build": "webpack",
+    "watch": "webpack --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
