@@ -39,13 +39,13 @@ $(function() {
     $("#smlt_to").val(popupSettings.smlt_to);
 
     //change variables in bgp
-    bgp.popupSettings.started = popupSettings.started;
-    bgp.popupSettings.rerank = popupSettings.rerank;
-    bgp.popupSettings.numcover = popupSettings.numcover;
-    bgp.popupSettings.smlt_to = popupSettings.smlt_to;
+    bgp._shared.popupSettings.started = popupSettings.started;
+    bgp._shared.popupSettings.rerank = popupSettings.rerank;
+    bgp._shared.popupSettings.numcover = popupSettings.numcover;
+    bgp._shared.popupSettings.smlt_to = popupSettings.smlt_to;
 
     if (!popupSettings.started) {
-      bgp.popupSettings.rerank = false;
+      bgp._shared.popupSettings.rerank = false;
       popupSettings.rerank = false;
       $("#button2").prop('checked', false);
       $("#button2").prop("disabled", true);

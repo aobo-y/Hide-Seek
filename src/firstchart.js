@@ -103,10 +103,10 @@ var parseWordCloudData = function(jsons) {
 }
 
 var bgp = chrome.extension.getBackgroundPage();
-var userTopics = bgp.userTopics;
-var generatedTopics = bgp.generatedTopics;
-var userQuery = parseWordCloudData(bgp.userQueries);
-var generatedQuery = parseWordCloudData(bgp.generatedQueries);
+var userTopics = bgp._shared.userTopics;
+var generatedTopics = bgp._shared.generatedTopics;
+var userQuery = parseWordCloudData(bgp._shared.userQueries);
+var generatedQuery = parseWordCloudData(bgp._shared.generatedQueries);
 var removeUnderscore = function(string) {
   return string.replace(/_/g, ' ');
 }

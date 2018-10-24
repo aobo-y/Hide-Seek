@@ -242,6 +242,17 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   }
 });
 
+
+// _shared to viz page
+window._shared = {};
+window._shared.userTopics = userTopics;
+window._shared.generatedTopics = generatedTopics;
+window._shared.userQueries = userQueries;
+window._shared.generatedQueries = generatedQueries;
+window._shared.popupSettings = popupSettings;
+window._shared.last_user_topic = last_user_topic;
+window._shared.last_generated_topics = last_generated_topics;
+
 // check if user makes a google search every 5 seconds
 setInterval(function() {
   if (!popupSettings.started) {

@@ -71,5 +71,6 @@
   },
   "web_accessible_resources": [
     "images/google.png"
-  ]
+  ],
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
 }

@@ -1,3 +1,5 @@
+import $ from 'jquery';
+
 $(function() {
   var href = location.href;
   var triggerMouseEvent = function(node, eventType) {

@@ -1,8 +1,11 @@
 import $ from 'jquery';
 import Springy from 'springy';
-import 'springy/springyui.js';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
+
+window.jQuery = $;
+window.Springy = Springy;
+require('springy/springyui.js');
 
 $(document).ready(function() {
   var canvas = document.getElementById("my_canvas");
@@ -16,11 +19,11 @@ var parseTopic = function(string) {
 
 // acquire data from background page
 var bgp = chrome.extension.getBackgroundPage();
-var ut = parseTopic(bgp.last_user_topic);
+var ut = parseTopic(bgp._shared.last_user_topic);
 console.log(ut);
 var gt = [];
-console.log(bgp.last_generated_topics);
-$.each(bgp.last_generated_topics, function(index, value) {
+console.log(bgp._shared.last_generated_topics);
+$.each(bgp._shared.last_generated_topics, function(index, value) {
   gt.push(parseTopic(value));
 })
 console.log(gt);
