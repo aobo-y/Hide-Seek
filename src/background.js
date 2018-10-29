@@ -24,7 +24,7 @@ var generateUUID = function() {
   // append user-id to database
   $.ajax({
     type: "POST",
-    url: encodeURI(apihost + '/QueryGenerator/QueryGenerator?action=R&uid=' + uuid),
+    url: encodeURI(apihost + '/QueryGenerator?action=R&uid=' + uuid),
     success: function(status) {
       if (status && status.length) {
         console.log("@@@@@ User registration success! @@@@@");
@@ -61,7 +61,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     // to download reranking data
     $.ajax({
       type: "POST",
-      url: encodeURI(apihost + '/QueryGenerator/QueryGenerator?uid=' + popupSettings.uuid + '&action=U'),
+      url: encodeURI(apihost + '/QueryGenerator?uid=' + popupSettings.uuid + '&action=U'),
       dataType: 'json',
       // request.data is like [snippet1, snippet2, ...]
       data: { json: request.data },
@@ -76,7 +76,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       userRank = request.index + 1;
       $.ajax({
         type: 'POST',
-        url: encodeURI(apihost + '/QueryGenerator/QueryGenerator?action=UC&query=' + request.keyword + '&click=' + userRank + '&url=' + request.url + '&content=' + request.title + '&uid=' + popupSettings.uuid + '&snip=' + request.content),
+        url: encodeURI(apihost + '/QueryGenerator?action=UC&query=' + request.keyword + '&click=' + userRank + '&url=' + request.url + '&content=' + request.title + '&uid=' + popupSettings.uuid + '&snip=' + request.content),
         success: function(status) {
           if (status && status.length) {
             console.log("@@@@@ user click post success! @@@@@");
@@ -222,7 +222,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     if (tab.url.indexOf('www.google.com') == -1) {
       $.ajax({
         type: 'POST',
-        url: encodeURI(apihost + '/QueryGenerator/QueryGenerator?action=SC&query=' + simulateKeyword + '&click=' + rank + '&url=' + tab.url + '&content=' + tab.title + '&uid=' + popupSettings.uuid),
+        url: encodeURI(apihost + '/QueryGenerator?action=SC&query=' + simulateKeyword + '&click=' + rank + '&url=' + tab.url + '&content=' + tab.title + '&uid=' + popupSettings.uuid),
         success: function(status) {
           if (status && status.length) {
             console.log("&&&&& Post successful! &&&&&")
@@ -282,7 +282,7 @@ requestHandlers.handle_search = function(data, callback, sender) {
       if (popupSettings.started) {
         $.ajax({
           type: 'POST',
-          url: encodeURI(apihost + '/QueryGenerator/QueryGenerator?action=Q&query=' + q + '&uid=' + popupSettings.uuid + '&numcover=' + popupSettings.numcover),
+          url: encodeURI(apihost + '/QueryGenerator?action=Q&query=' + q + '&uid=' + popupSettings.uuid + '&numcover=' + popupSettings.numcover),
           success: function(keywords) {
             last_generated_topics = [];
             $.each(keywords, function(key, val) {
