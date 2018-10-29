@@ -29,7 +29,8 @@
     "jquery": "^3.3.1",
     "popper.js": "^1.14.4",
     "springy": "^2.8.0",
-    "store": "^2.0.12"
+    "store": "^2.0.12",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "css-loader": "^1.0.0",
