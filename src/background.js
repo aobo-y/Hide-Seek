@@ -4,10 +4,6 @@ import config from './config.js';
 
 const {apihost} = config;
 
-String.prototype.repeat = function(length) {
-  return Array(length + 1).join(this);
-};
-
 var toEightDigits = function(n) {
   var s = n.toString;
   return "0".repeat(8 - s.length) + s;
