@@ -1,7 +1,6 @@
 import $ from 'jquery';
 import store from 'store';
 import uuidv4 from 'uuid/v4'
-import config from './config';
 import {
   createUser,
   rerankSearchResults,
@@ -9,13 +8,6 @@ import {
   simulateClick,
   queryKeywords
 } from './lib/api';
-
-const {apihost} = config;
-
-var toEightDigits = function(n) {
-  var s = n.toString;
-  return "0".repeat(8 - s.length) + s;
-}
 
 var generateUUID = function() {
   var uuid = uuidv4();
@@ -27,7 +19,6 @@ var generateUUID = function() {
 };
 
 var rank = 0;
-var userRank = 0;
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // check content type
@@ -286,8 +277,10 @@ requestHandlers.handle_search = async (data, callback, sender) => {
         });
 
         last_generated_topics = [];
-        $.each(keywords, function(key, val) {
-          console.log(key + ", " + val);
+
+        Object.keys(keywords).forEach(key => {
+          val = keywords[key];
+
           if (key == "input") {
             last_user_topic = val;
             addTopic(userTopics, val);
