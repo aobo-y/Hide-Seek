@@ -1,7 +1,8 @@
 import $ from 'jquery';
 import store from 'store';
-import uuidv5 from 'uuid/v5'
-import config from './config.js';
+import uuidv4 from 'uuid/v4'
+import config from './config';
+import {createUser} from './lib/api';
 
 const {apihost} = config;
 
@@ -11,18 +12,11 @@ var toEightDigits = function(n) {
 }
 
 var generateUUID = function() {
-  var uuid = uuidv5();
+  var uuid = uuidv4();
 
   // append user-id to database
-  $.ajax({
-    type: "POST",
-    url: encodeURI(apihost + '/QueryGenerator?action=R&uid=' + uuid),
-    success: function(status) {
-      if (status && status.length) {
-        console.log("@@@@@ User registration success! @@@@@");
-      }
-    }
-  })
+  createUser(uuid);
+
   return uuid;
 };
 
