@@ -2,7 +2,13 @@ import $ from 'jquery';
 import store from 'store';
 import uuidv4 from 'uuid/v4'
 import config from './config';
-import {createUser} from './lib/api';
+import {
+  createUser,
+  rerankSearchResults,
+  updateClick,
+  simulateClick,
+  queryKeywords
+} from './lib/api';
 
 const {apihost} = config;
 
@@ -23,56 +29,66 @@ var generateUUID = function() {
 var rank = 0;
 var userRank = 0;
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   // check content type
-  if (request.action == 'A') {
-    $.ajax({
-      type: request.method,
-      url: request.url,
-      async: true
-    }).done(function(message, text, jqXHR) {
-      var type = jqXHR.getResponseHeader('Content-Type').split(";")[0];
-      if (type == "text/html") {
-        sendResponse({ status: "YES" });
-        rank = request.rank + 1;
-      } else {
-        console.log("%%%%%%%% Cannot open type: " + type + " %%%%%%%%");
-        sendResponse({ status: "NO" });
-      }
-    })
-  } else if (request.action == 'R') {
-    // check if rerank feature is on
-    sendResponse({ status: popupSettings.rerank })
-  } else if (request.action == 'U') {
-    // to download reranking data
-    $.ajax({
-      type: "POST",
-      url: encodeURI(apihost + '/QueryGenerator?uid=' + popupSettings.uuid + '&action=U'),
-      dataType: 'json',
-      // request.data is like [snippet1, snippet2, ...]
-      data: { json: request.data },
-      success: function(data) {
-        console.log(":::::: the rank is ::::::");
-        console.log(data);
-        sendResponse({ data: data });
-      }
-    })
-  } else if (request.action == "UC") {
-    if (popupSettings.started) {
-      userRank = request.index + 1;
-      $.ajax({
-        type: 'POST',
-        url: encodeURI(apihost + '/QueryGenerator?action=UC&query=' + request.keyword + '&click=' + userRank + '&url=' + request.url + '&content=' + request.title + '&uid=' + popupSettings.uuid + '&snip=' + request.content),
-        success: function(status) {
-          if (status && status.length) {
-            console.log("@@@@@ user click post success! @@@@@");
-          }
-        }
-      })
-    }
+  switch (request.action) {
+    case 'A':
+      checkContentType(request, sendResponse);
+      return true;
+
+    case 'R':
+      // check if rerank feature is on
+      sendResponse({ status: popupSettings.rerank });
+      return;
+
+    case 'U':
+      rerankSearchResultsHandler(request, sendResponse);
+      return true;
+
+    case 'UC':
+      if (!popupSettings.started) return;
+
+      updateClickHandler(request);
+      return;
+
+    default:
+      return;
   }
-  return true;
 })
+
+const checkContentType = async (request, sendResponse) => {
+  $.ajax({
+    type: request.method,
+    url: request.url,
+    async: true
+  }).done(function(message, text, jqXHR) {
+    var type = jqXHR.getResponseHeader('Content-Type').split(";")[0];
+    if (type == "text/html") {
+      sendResponse({ status: "YES" });
+      rank = request.rank + 1;
+    } else {
+      console.log("%%%%%%%% Cannot open type: " + type + " %%%%%%%%");
+      sendResponse({ status: "NO" });
+    }
+  })
+}
+
+const rerankSearchResultsHandler = async (request, sendResponse) => {
+  const rerankedOrder = await rerankSearchResults(popupSettings.uuid, request.data)
+  sendResponse({ data: rerankedOrder });
+}
+
+const updateClickHandler = async request => {
+  await updateClick(popupSettings.uuid, {
+    query: request.keyword,
+    click: request.index + 1,
+    url: request.url,
+    content: request.title,
+    snip: request.content
+  });
+}
+
+
 
 chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
   requestHandlers[request.handler](request, sendResponse, sender);
@@ -206,15 +222,13 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   if (simulateTab && simulateTab.id === tabId && changeInfo.status && changeInfo.status === 'complete') {
     // if (simulateTab && simulateTab.id === tabId && title) {
     if (tab.url.indexOf('www.google.com') == -1) {
-      $.ajax({
-        type: 'POST',
-        url: encodeURI(apihost + '/QueryGenerator?action=SC&query=' + simulateKeyword + '&click=' + rank + '&url=' + tab.url + '&content=' + tab.title + '&uid=' + popupSettings.uuid),
-        success: function(status) {
-          if (status && status.length) {
-            console.log("&&&&& Post successful! &&&&&")
-          }
-        }
+      simulateClick(popupSettings.uuid, {
+        query: simulateKeyword,
+        click: rank,
+        url: tab.url,
+        content: tab.title
       });
+
       try {
         chrome.tabs.remove(tab.id, function() {
           if (chrome.runtime.lastError) {} else {}
@@ -255,7 +269,7 @@ requestHandlers.simulate_keyword = function(data, callback, sender) {
 // handle the search
 var lastSearch;
 
-requestHandlers.handle_search = function(data, callback, sender) {
+requestHandlers.handle_search = async (data, callback, sender) => {
   if (simulateTab && simulateTab.id === sender.tab.id) {
     return callback({ simulate: true });
   } else {
@@ -266,28 +280,27 @@ requestHandlers.handle_search = function(data, callback, sender) {
     if (lastSearch != q) {
       lastSearch = q;
       if (popupSettings.started) {
-        $.ajax({
-          type: 'POST',
-          url: encodeURI(apihost + '/QueryGenerator?action=Q&query=' + q + '&uid=' + popupSettings.uuid + '&numcover=' + popupSettings.numcover),
-          success: function(keywords) {
-            last_generated_topics = [];
-            $.each(keywords, function(key, val) {
-              console.log(key + ", " + val);
-              if (key == "input") {
-                last_user_topic = val;
-                addTopic(userTopics, val);
-                addQuery(userQueries, q.replace(/[^A-Za-z0-9]/g, ' '));
-              } else {
-                keywordsPools = keywordsPools.concat(key);
-                last_generated_topics.push(val);
-                addTopic(generatedTopics, val);
-                addQuery(generatedQueries, key);
-              }
-              saveTopics();
-              saveLastTopics();
-              saveQueries();
-            });
+        const keywords = await queryKeywords(popupSettings.uuid, {
+          query: q,
+          numcover: popupSettings.numcover
+        });
+
+        last_generated_topics = [];
+        $.each(keywords, function(key, val) {
+          console.log(key + ", " + val);
+          if (key == "input") {
+            last_user_topic = val;
+            addTopic(userTopics, val);
+            addQuery(userQueries, q.replace(/[^A-Za-z0-9]/g, ' '));
+          } else {
+            keywordsPools = keywordsPools.concat(key);
+            last_generated_topics.push(val);
+            addTopic(generatedTopics, val);
+            addQuery(generatedQueries, key);
           }
+          saveTopics();
+          saveLastTopics();
+          saveQueries();
         });
       }
     }
