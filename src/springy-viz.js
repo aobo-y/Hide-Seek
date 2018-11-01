@@ -29,11 +29,11 @@ $.each(bgp._shared.last_generated_topics, function(index, value) {
 console.log(gt);
 
 if (ut == null || ut == undefined) {
-  $('#viz').css("height", "50px");
-  $('#viz').css("color", "grey");
-  $('#viz').css("font-family", "Times New Roman");
-  $('#viz').css("font-size", "16px");
-  $('#viz').html("Make your first google search with Hide & Seek to see a brief report here.");
+  // $('#viz').css("height", "50px");
+  // $('#viz').css("color", "grey");
+  // $('#viz').css("font-family", "Times New Roman");
+  // $('#viz').css("font-size", "16px");
+  // $('#viz').html("Make your first google search with Hide & Seek to see a brief report here.");
 } else {
   // make a new graph
   var graph = new Springy.Graph();

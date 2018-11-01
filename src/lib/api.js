@@ -1,4 +1,5 @@
 import axios from 'axios';
+import uuidv4 from 'uuid/v4';
 
 import config from '../config.js';
 
@@ -19,11 +20,13 @@ async function callApi(method, params, data) {
   return response.data;
 }
 
-export const createUser = async uuid => {
-  return await callApi('post', {
+export const createUser = async () => {
+  const uuid = uuidv4();
+  await callApi('post', {
     action: 'R',
     uid: uuid
   });
+  return uuid;
 };
 
 // previous implementer terribly designed this function

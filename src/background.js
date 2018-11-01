@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import store from 'store';
-import uuidv4 from 'uuid/v4'
+
 import {
   createUser,
   rerankSearchResults,
@@ -9,18 +9,29 @@ import {
   queryKeywords
 } from './lib/api';
 
-var generateUUID = function() {
-  var uuid = uuidv4();
+var popupSettings = store.get('popupSettings') || {};
+var userTopics = store.get('userTopics') || {};
+var generatedTopics = store.get('generatedTopics') || {};
+var last_user_topic = store.get('lut') || undefined;
+var last_generated_topics = store.get('lgt') || [];
+var userQueries = store.get("userQuery") || {};
+var generatedQueries = store.get("generatedQuery") || {};
 
-  // append user-id to database
-  createUser(uuid);
 
-  return uuid;
-};
+// _shared to viz page
+window._shared = {};
+window._shared.userTopics = userTopics;
+window._shared.generatedTopics = generatedTopics;
+window._shared.userQueries = userQueries;
+window._shared.generatedQueries = generatedQueries;
+window._shared.popupSettings = popupSettings;
+window._shared.last_user_topic = last_user_topic;
+window._shared.last_generated_topics = last_generated_topics;
+
 
 var rank = 0;
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+const onMessageHandler = (request, sender, sendResponse) => {
   // check content type
   switch (request.action) {
     case 'A':
@@ -45,7 +56,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     default:
       return;
   }
-})
+}
 
 const checkContentType = async (request, sendResponse) => {
   $.ajax({
@@ -81,48 +92,11 @@ const updateClickHandler = async request => {
 
 
 
-chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
-  requestHandlers[request.handler](request, sendResponse, sender);
-});
 
-var requestHandlers = {};
-
-/**
- * data storage
- */
-
-// part 1: global setting including offswitch, user_id and starting date
-var popupSettings = store.get('popupSettings') || {
-  started: true,
-  rerank: true,
-  uuid: generateUUID(),
-  date: new Date(),
-  numcover: 4,
-  smlt_to: 15
+var savePopupSettings = function(settings) {
+  store.set('popupSettings', settings);
 }
 
-var savePopupSettings = function() {
-  store.set('popupSettings', popupSettings);
-  console.log("+++++++++++ GLOBAL VARIABLES SET ++++++++++");
-  console.log("+ " + store.get('popupSettings').started + " ".repeat((40 - store.get('popupSettings').started.toString().length)) + "+");
-  console.log("+ " + store.get('popupSettings').rerank + " ".repeat((40 - store.get('popupSettings').rerank.toString().length)) + "+");
-  console.log("+ " + store.get('popupSettings').uuid + " ".repeat(4) + "+");
-  console.log("+ " + store.get('popupSettings').date + " ".repeat(16) + "+");
-  console.log("+ " + store.get('popupSettings').numcover + " ".repeat((40 - store.get('popupSettings').numcover.toString().length)) + "+");
-  console.log("+ " + store.get('popupSettings').smlt_to + " ".repeat((40 - store.get('popupSettings').smlt_to.toString().length)) + "+");
-  console.log("+++++++++++ GLOBAL VARIABLES SET ++++++++++");
-}
-
-savePopupSettings();
-
-if (!popupSettings.uuid) {
-  popupSettings.uuid = generateUUID();
-  savePopupSettings();
-}
-
-// part 2: save topic history, for visualization.html
-var userTopics = store.get('userTopics') || {};
-var generatedTopics = store.get('generatedTopics') || {};
 
 var saveTopics = function() {
   store.set('userTopics', userTopics);
@@ -138,22 +112,11 @@ var addTopic = function(topicCollection, topic) {
   saveTopics();
 }
 
-saveTopics();
-
-// part 3: save topic history, for popup.html
-var last_user_topic = store.get('lut') || undefined;
-var last_generated_topics = store.get('lgt') || [];
 
 var saveLastTopics = function() {
   store.set('lut', last_user_topic);
   store.set('lgt', last_generated_topics);
 }
-
-saveLastTopics();
-
-//part 4: save queries, for visualization.html
-var userQueries = store.get("userQuery") || {};
-var generatedQueries = store.get("generatedQuery") || {};
 
 var saveQueries = function() {
   store.set("userQuery", userQueries);
@@ -174,7 +137,7 @@ var addQuery = function(queryCollection, query) {
   saveQueries();
 }
 
-saveQueries();
+
 
 // simulate search
 var keywordsPools = [];
@@ -208,7 +171,7 @@ var simulateSearch = function() {
 }
 
 // post simulation data back to database
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+const onTabUpdateHandler = (tabId, changeInfo, tab) => {
   var title = changeInfo.title;
   if (simulateTab && simulateTab.id === tabId && changeInfo.status && changeInfo.status === 'complete') {
     // if (simulateTab && simulateTab.id === tabId && title) {
@@ -231,41 +194,36 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
       }
     }
   }
-});
-
-
-// _shared to viz page
-window._shared = {};
-window._shared.userTopics = userTopics;
-window._shared.generatedTopics = generatedTopics;
-window._shared.userQueries = userQueries;
-window._shared.generatedQueries = generatedQueries;
-window._shared.popupSettings = popupSettings;
-window._shared.last_user_topic = last_user_topic;
-window._shared.last_generated_topics = last_generated_topics;
-
-// check if user makes a google search every 5 seconds
-setInterval(function() {
-  if (!popupSettings.started) {
-    return;
-  }
-  simulateSearch();
-}, 5 * 1000);
-
-// simulate acquired keywords
-requestHandlers.simulate_keyword = function(data, callback, sender) {
-  callback({ keyword: simulateKeyword });
 }
+
+
+
+const onRequestHandler = (request, sender, sendResponse) => {
+  switch (request.handler) {
+    // simulate acquired keywords
+    case 'simulate_keyword':
+      sendResponse({ keyword: simulateKeyword });
+      break;
+
+    case 'handle_search':
+      if (simulateTab && simulateTab.id === sender.tab.id) {
+        sendResponse({ simulate: true });
+      } else {
+        sendResponse({ simulate: false });
+        handleSearch(request);
+      }
+      break;
+
+    default:
+      break;
+  }
+}
+
 
 // handle the search
 var lastSearch;
 
-requestHandlers.handle_search = async (data, callback, sender) => {
-  if (simulateTab && simulateTab.id === sender.tab.id) {
-    return callback({ simulate: true });
-  } else {
-    callback({ simulate: false });
-  }
+const handleSearch = async (data, callback, sender) => {
   if (data.q != undefined) {
     var q = data.q;
     if (lastSearch != q) {
@@ -279,7 +237,7 @@ requestHandlers.handle_search = async (data, callback, sender) => {
         last_generated_topics = [];
 
         Object.keys(keywords).forEach(key => {
-          val = keywords[key];
+          const val = keywords[key];
 
           if (key == "input") {
             last_user_topic = val;
@@ -299,3 +257,36 @@ requestHandlers.handle_search = async (data, callback, sender) => {
     }
   }
 }
+
+
+async function main() {
+  if (!popupSettings.uuid) {
+    Object.assign(popupSettings, {
+      started: true,
+      rerank: true,
+      uuid: await createUser(),
+      date: new Date(),
+      numcover: 4,
+      smlt_to: 15
+    });
+    savePopupSettings(popupSettings);
+  }
+
+  chrome.runtime.onMessage.addListener(onMessageHandler);
+  chrome.extension.onRequest.addListener(onRequestHandler);
+  chrome.tabs.onUpdated.addListener(onTabUpdateHandler);
+
+  savePopupSettings(popupSettings);
+  saveTopics();
+  saveLastTopics();
+  saveQueries();
+
+  // check if user makes a google search every 5 seconds
+  setInterval(() => {
+    if (!popupSettings.started) return;
+
+    simulateSearch();
+  }, 5 * 1000);
+}
+
+main();
