@@ -3,6 +3,8 @@ import Springy from 'springy';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+import {getLastSearch} from './lib/state';
+
 window.jQuery = $;
 window.Springy = Springy;
 require('springy/springyui.js');
@@ -19,14 +21,10 @@ var parseTopic = function(string) {
 
 // acquire data from background page
 var bgp = chrome.extension.getBackgroundPage();
-var ut = parseTopic(bgp._shared.last_user_topic);
-console.log(ut);
-var gt = [];
-console.log(bgp._shared.last_generated_topics);
-$.each(bgp._shared.last_generated_topics, function(index, value) {
-  gt.push(parseTopic(value));
-})
-console.log(gt);
+
+const {userTopic, genTopics} = getLastSearch();
+const ut = parseTopic(userTopic);
+const gt = genTopics.map(parseTopic);
 
 if (ut == null || ut == undefined) {
   // $('#viz').css("height", "50px");

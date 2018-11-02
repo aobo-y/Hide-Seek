@@ -1,22 +1,17 @@
 import $ from 'jquery';
 import store from 'store';
 
-var bgp = chrome.extension.getBackgroundPage();
-var popupSettings = store.get('popupSettings');
+import {getSettings, patchSettings} from './lib/state';
 
-var initialize_state = function() {
-  $("#button1").prop('checked', popupSettings.started);
-  $("#button2").prop('checked', popupSettings.rerank);
-  $("#numcover").val(popupSettings.numcover);
-  $("#smlt_to").val(popupSettings.smlt_to);
-  bgp._shared.popupSettings.started = popupSettings.started;
-  bgp._shared.popupSettings.rerank = popupSettings.rerank;
-  bgp._shared.popupSettings.numcover = popupSettings.numcover;
-  bgp._shared.popupSettings.smlt_to = popupSettings.smlt_to;
-  if (!popupSettings.started) {
-    bgp._shared.popupSettings.rerank = false;
-    popupSettings.rerank = false;
-    $("#button2").prop('checked', false);
+const renderSettings = function() {
+  const settings = getSettings();
+
+  $("#button1").prop('checked', settings.started);
+  $("#button2").prop('checked', settings.rerank);
+  $("#numcover").val(settings.numcover);
+  $("#smlt_to").val(settings.smlt_to);
+
+  if (!settings.started) {
     $("#button2").prop("disabled", true);
     $("#numcover").prop("disabled", true);
     $("#smlt_to").prop("disabled", true);
@@ -25,11 +20,10 @@ var initialize_state = function() {
     $("#numcover").prop("disabled", false);
     $("#smlt_to").prop("disabled", false);
   }
-  store.set('popupSettings', popupSettings);
 }
 
-var update_state = function() {
-  initialize_state();
+var updateState = function() {
+  renderSettings();
   $("#status").text("Settings saved!");
   setTimeout(function() {
     $("#status").text('');
@@ -37,47 +31,41 @@ var update_state = function() {
 }
 
 $("#button1").change(function() {
-  popupSettings.started = this.checked;
-  update_state();
+  patchSettings({ started: this.checked });
+  updateState();
 })
 
 $("#button2").change(function() {
-  popupSettings.rerank = this.checked;
-  update_state();
+  patchSettings({ rerank: this.checked });
+  updateState();
 })
 
 
 $("#numcover").change(function() {
   var numcover = parseInt($("#numcover").val());
   if (numcover >= 2 && numcover <= 8) {
-    popupSettings.numcover = numcover;
-    update_state();
+    patchSettings({ numcover });
+    updateState();
   } else {
     $("#status").text("Setting out of bound!");
     setTimeout(function() {
       $("#status").text('');
     }, 1500);
-    $("#numcover").val(popupSettings.numcover);
   }
 })
 
 $("#smlt_to").change(function() {
-  var smlt = parseInt($("#smlt_to").val());
-  console.log(smlt);
-  if (smlt >= 10 && smlt <= 60) {
-    popupSettings.smlt_to = smlt;
-    update_state();
+  var smlt_to = parseInt($("#smlt_to").val());
+  if (smlt_to >= 10 && smlt_to <= 60) {
+    patchSettings({ smlt_to });
+
+    updateState();
   } else {
     $("#status").text("Setting out of bound!");
     setTimeout(function() {
       $("#status").text('');
     }, 1500);
-    $("#smlt_to").val(popupSettings.smlt_to);
   }
 })
 
-console.log(popupSettings.started);
-console.log(popupSettings.rerank);
-console.log(popupSettings.numcover);
-console.log(popupSettings.smlt_to);
-initialize_state();
+renderSettings();

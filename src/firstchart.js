@@ -4,6 +4,14 @@ import Highcharts from 'highcharts';
 import hcDrilldown from 'highcharts/modules/drilldown.js';
 import hcWordcloud from 'highcharts/modules/wordcloud.js';
 
+import {
+  getUser,
+  getUserTopics,
+  getUserQueries,
+  getGenTopics,
+  getGenQueries
+} from './lib/state';
+
 hcDrilldown(Highcharts);
 hcWordcloud(Highcharts);
 
@@ -102,11 +110,12 @@ var parseWordCloudData = function(jsons) {
   return arr.slice(0, Math.min(101, arr.length));
 }
 
-var bgp = chrome.extension.getBackgroundPage();
-var userTopics = bgp._shared.userTopics;
-var generatedTopics = bgp._shared.generatedTopics;
-var userQuery = parseWordCloudData(bgp._shared.userQueries);
-var generatedQuery = parseWordCloudData(bgp._shared.generatedQueries);
+const userTopics = getUserTopics();
+const generatedTopics = getGenTopics();
+const userQuery = parseWordCloudData(getUserQueries());
+const generatedQuery = parseWordCloudData(getGenQueries());
+
+
 var removeUnderscore = function(string) {
   return string.replace(/_/g, ' ');
 }
@@ -449,8 +458,10 @@ $("#tabWordCloud").click(function(evt) {
 })
 
 $(function() {
-  $("#start-date").html(store.get('popupSettings').date.slice(0, 10));
-  $("#user-id").html(store.get('popupSettings').uuid);
+  const user = getUser();
+
+  $("#start-date").html(user.date.slice(0, 10));
+  $("#user-id").html(user.uid);
   if (Object.keys(userTopics).length > 0) {
     $("#tabTopic").click();
   } else {
