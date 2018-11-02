@@ -173,39 +173,28 @@ var lastSearch;
 
 const handleSearch = async (data, callback, sender) => {
   const settings = getSettings();
+  if (!settings.started) return;
 
-  if (data.q != undefined) {
-    var q = data.q;
-    if (lastSearch != q) {
-      lastSearch = q;
-      if (settings.started) {
-        const keywords = await queryKeywords({
-          query: q,
-          numcover: settings.numcover
-        });
+  const query = data.q;
+  if (!query) return;
+  if (query === lastSearch) return;
 
-        let topic;
-        let genTopics = [];
+  lastSearch = query;
+  const keywords = await queryKeywords({
+    query,
+    numcover: settings.numcover
+  });
 
-        Object.keys(keywords).forEach(key => {
-          const val = keywords[key];
+  const topic = keywords.input;
+  patchUserTopics(topic);
+  patchUserQueries(query.replace(/[^A-Za-z0-9]/g, ' '));
 
-          if (key == "input") {
-            topic = val;
-            patchUserTopics(val);
-            patchUserQueries(q.replace(/[^A-Za-z0-9]/g, ' '));
-          } else {
-            keywordsPools = keywordsPools.concat(key);
-            genTopics.push(val);
+  const genQueries = Object.keys(keywords).filter(k => k !== 'input');
+  const genTopics = genQueries.map(q => keywords[q]);
+  patchGenTopics(genTopics);
+  patchGenQueries(genQueries);
 
-            patchGenTopics(val);
-            patchGenQueries(key);
-          }
-        });
-        updateLastSearch(topic, genTopics);
-      }
-    }
-  }
+  updateLastSearch(topic, genTopics);
 }
 
 

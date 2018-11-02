@@ -68,10 +68,12 @@ export const getGenTopics = () => {
   return store.get('genTopics') || {};
 }
 
-export const patchGenTopics = topic => {
+export const patchGenTopics = newTopics => {
   const topics = getGenTopics();
-  if (!topics[topic]) topics[topic] = 0;
-  topics[topic]++;
+  newTopics.forEach(topic => {
+    if (!topics[topic]) topics[topic] = 0;
+    topics[topic]++;
+  });
   store.set('genTopics', topics);
   return topics;
 }
@@ -80,11 +82,13 @@ export const getGenQueries = () => {
   return store.get('genQueries') || {};
 }
 
-export const patchGenQueries = queryString => {
+export const patchGenQueries = newQueries => {
   const queries = getGenQueries();
-  queryString.split(' ').forEach(q => {
-    if (!queries[q]) queries[q] = 0;
-    queries[q]++;
+  newQueries.forEach(queryString => {
+    queryString.split(' ').forEach(q => {
+      if (!queries[q]) queries[q] = 0;
+      queries[q]++;
+    });
   });
   store.set('genQueries', queries);
   return queries;
