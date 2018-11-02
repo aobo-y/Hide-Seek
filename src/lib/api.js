@@ -1,6 +1,7 @@
 import axios from 'axios';
 import uuidv4 from 'uuid/v4';
 
+import {getUser} from './state.js';
 import config from '../config.js';
 
 const {apihost} = config;
@@ -11,6 +12,11 @@ const apiInstance = axios.create({
 })
 
 async function callApi(method, params, data) {
+  if (!params.uid) {
+    const user = getUser();
+    params = {...params, uid: user.uid};
+  }
+
   const response = await apiInstance({
     method,
     params,
@@ -21,18 +27,18 @@ async function callApi(method, params, data) {
 }
 
 export const createUser = async () => {
-  const uuid = uuidv4();
+  const uid = uuidv4();
   await callApi('post', {
     action: 'R',
-    uid: uuid
+    uid
   });
-  return uuid;
+  return uid;
 };
 
 // previous implementer terribly designed this function
 // pass array as form with jquery... huge mistake
 // keep it for now
-export const rerankSearchResults = async (uuid, results = []) => {
+export const rerankSearchResults = async (results = []) => {
   // request.data is like [snippet1, snippet2, ...]
   const body = new URLSearchParams();
   for (let r of results) {
@@ -40,12 +46,11 @@ export const rerankSearchResults = async (uuid, results = []) => {
   }
 
   return await callApi('post', {
-    action: 'U',
-    uid: uuid
+    action: 'U'
   }, body);
 };
 
-export const updateClick = async (uuid, {
+export const updateClick = async ({
   query,
   click,
   url,
@@ -54,7 +59,6 @@ export const updateClick = async (uuid, {
 }) => {
   return await callApi('post', {
     action: 'UC',
-    uid: uuid,
     query,
     click,
     url,
@@ -63,7 +67,7 @@ export const updateClick = async (uuid, {
   });
 }
 
-export const simulateClick = async (uuid, {
+export const simulateClick = async ({
   query,
   click,
   url,
@@ -71,7 +75,6 @@ export const simulateClick = async (uuid, {
 }) => {
   return await callApi('post', {
     action: 'SC',
-    uid: uuid,
     query,
     click,
     url,
@@ -79,13 +82,12 @@ export const simulateClick = async (uuid, {
   });
 }
 
-export const queryKeywords = async (uuid, {
+export const queryKeywords = async ({
   query,
   numcover,
 }) => {
   return await callApi('post', {
     action: 'Q',
-    uid: uuid,
     query,
     numcover
   });

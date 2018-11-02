@@ -1,5 +1,4 @@
 import $ from 'jquery';
-import store from 'store';
 
 import {
   createUser,
@@ -19,8 +18,6 @@ import {
   patchGenQueries,
   updateLastSearch
 } from './lib/state';
-
-let uid = null;
 
 var rank = 0;
 
@@ -71,12 +68,12 @@ const checkContentType = async (request, sendResponse) => {
 }
 
 const rerankSearchResultsHandler = async (request, sendResponse) => {
-  const rerankedOrder = await rerankSearchResults(uid, request.data)
+  const rerankedOrder = await rerankSearchResults(request.data)
   sendResponse({ data: rerankedOrder });
 }
 
 const updateClickHandler = async request => {
-  await updateClick(uid, {
+  await updateClick({
     query: request.keyword,
     click: request.index + 1,
     url: request.url,
@@ -127,7 +124,7 @@ const onTabUpdateHandler = (tabId, changeInfo, tab) => {
   if (simulateTab && simulateTab.id === tabId && changeInfo.status && changeInfo.status === 'complete') {
     // if (simulateTab && simulateTab.id === tabId && title) {
     if (tab.url.indexOf('www.google.com') == -1) {
-      simulateClick(uid, {
+      simulateClick({
         query: simulateKeyword,
         click: rank,
         url: tab.url,
@@ -182,7 +179,7 @@ const handleSearch = async (data, callback, sender) => {
     if (lastSearch != q) {
       lastSearch = q;
       if (settings.started) {
-        const keywords = await queryKeywords(uid, {
+        const keywords = await queryKeywords({
           query: q,
           numcover: settings.numcover
         });
@@ -213,12 +210,11 @@ const handleSearch = async (data, callback, sender) => {
 
 
 async function main() {
-  let user = getUser()
-  if (!user) {
-    uid = await createUser()
-    user = updateUser(uid);
+  // create user at init
+  if (!getUser()) {
+    const uid = await createUser()
+    updateUser(uid);
   }
-  uid = user.uid;
 
   chrome.runtime.onMessage.addListener(onMessageHandler);
   chrome.extension.onRequest.addListener(onRequestHandler);
