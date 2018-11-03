@@ -26,15 +26,6 @@ const onMessageHandler = (request, sender, sendResponse) => {
 
   // check content type
   switch (request.action) {
-    case 'A':
-      checkContentType(request, sendResponse);
-      return true;
-
-    case 'R':
-      // check if rerank feature is on
-      sendResponse({ status: settings.rerank });
-      return;
-
     case 'U':
       rerankSearchResultsHandler(request, sendResponse);
       return true;
@@ -48,23 +39,6 @@ const onMessageHandler = (request, sender, sendResponse) => {
     default:
       return;
   }
-}
-
-const checkContentType = async (request, sendResponse) => {
-  $.ajax({
-    type: request.method,
-    url: request.url,
-    async: true
-  }).done(function(message, text, jqXHR) {
-    var type = jqXHR.getResponseHeader('Content-Type').split(";")[0];
-    if (type == "text/html") {
-      sendResponse({ status: "YES" });
-      rank = request.rank + 1;
-    } else {
-      console.log("%%%%%%%% Cannot open type: " + type + " %%%%%%%%");
-      sendResponse({ status: "NO" });
-    }
-  })
 }
 
 const rerankSearchResultsHandler = async (request, sendResponse) => {

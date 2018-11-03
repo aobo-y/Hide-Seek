@@ -1,5 +1,9 @@
 import $ from 'jquery';
 
+import {getSettings} from './lib/state';
+
+import './styles/content.css';
+
 const href = location.href;
 
 const getQueryString = () => {
@@ -14,91 +18,64 @@ const doSearch = function(keyword) {
   submit.click();
 }
 
+const initRerank = () => {
+  const blocks = Array.from(document.querySelectorAll('div.srg'));
+  const itemsByBlocks = blocks
+    .map(b => Array.from(b.querySelectorAll(':scope > div.g')))
+  const blockLength = itemsByBlocks.map(ib => ib.length);
+  const items = itemsByBlocks.reduce((prev, curr) => prev.concat(curr));
+  const snippets = items.map(i => i.querySelector('span.st').textContent);
+
+  chrome.runtime.sendMessage({
+    action: 'U',
+    data: snippets
+  }, response => {
+    const newOrder = response.data;
+    const sortedItems = [...items].sort(function(a, b) {
+      return newOrder[items.indexOf(a)] - newOrder[items.indexOf(b)];
+    });
+
+    const rerankBtn = document.createElement('input');
+    rerankBtn.setAttribute('type', 'button');
+    rerankBtn.setAttribute('value', 'rerank results');
+
+    rerankBtn.onclick = () => {
+      let startIndex = 0;
+      blocks.forEach((block, index) => {
+        const length = blockLength[index];
+        sortedItems.slice(startIndex, length).forEach(item => {
+          block.append(item);
+        });
+
+        startIndex = length;
+      });
+
+      rerankBtn.toggleAttribute('disabled');
+    };
+
+    const resultStats = document.querySelector('#resultStats');
+    resultStats.append(rerankBtn);
+  });
+}
+
 const trackSearchInfo = () => {
-  const query = getQueryString(href, 'q');
+  const query = getQueryString();
   if (!query) return;
 
   chrome.extension.sendRequest({ handler: 'handle_search', query }, result => {
-    console.log('result', result);
-
     if (result && result.simulate) {
-      // current page is simulated
-      var alist = $('#res .g .r a');
-      var idx = Math.floor(Math.random() * alist.length);
-      console.log(idx)
+      // if the link leads to files, like pdf & ppt
+      // the 1st child is a span
+      // otherwise anchor
+      const linkList = Array.from(document.querySelectorAll('.g .rc > .r'))
+        .map(ele => ele.children[0])
+        .filter(ele => ele.tagName === 'A');
 
-      // make sure random click does not trigger a download
-      chrome.runtime.sendMessage({
-        method: 'HEAD',
-        action: 'A',
-        url: alist[idx].href,
-        rank: idx
-      }, response => {
-        if (response.status !== "YES") return;
-        alist[idx].click();
-      });
+      if (!linkList.length) return;
+
+      const simulateIndex  = Math.floor(Math.random() * linkList.length);
+      linkList[simulateIndex].click();
     } else {
-      // current page is user search page
-
-      // upload the page to the server and download re-ranking
-      var items = [];
-      var snippets = [];
-      var block = [];
-      var numInEachBlock = [0];
-
-      $.each($("div.srg"), function(index, value) {
-        console.log("=======");
-        // save the block
-        block.push($(this));
-        // save items in block in order
-        var tmpItem = $(this).find("div.g").toArray();
-        numInEachBlock.push(tmpItem.length);
-        $.each(tmpItem, function(idx, val) {
-          items.push($(this));
-        });
-        console.log(tmpItem);
-        $.each($(this).find("div.g span.st"), function(idx, val) {
-          console.log($(this));
-          snippets.push($(this).text());
-        })
-      });
-
-      var clone = items.slice(0);
-
-      chrome.runtime.sendMessage({
-        action: 'U',
-        data: snippets
-      }, function(response) {
-        var re_rank = response.data;
-        console.log(re_rank);
-        items.sort(function(a, b) {
-          return re_rank[clone.indexOf(a)] - re_rank[clone.indexOf(b)];
-        })
-      })
-
-      chrome.runtime.sendMessage({ action: 'R' }, response => {
-        console.log(response.status);
-        // whether re-ranking switch is on
-        if (!response.status) return;
-
-        $('<input type="button" id="rerank" value="re-rank results" style="float: right">').insertAfter("nobr");
-        $("#rerank").removeAttr('style').css({ "font-size": "20px", "color": "green", "font-weight": "bold" });
-        $("#rerank").click(function() {
-          $("#rerank").attr('disabled', 'disabled');
-          $("#rerank").removeAttr('style').css({ "font-size": "20px", "color": "grey", "font-weight": "bold" });
-          var i = 0;
-          $.each(block, function() {
-            var tmp = $(this);
-            console.log(tmp[0]);
-            $.each(items.slice(numInEachBlock[i], numInEachBlock[i + 1]), function() {
-              tmp[0].append(this[0]);
-              console.log(this[0]);
-            })
-            i += 1;
-          });
-        });
-      });
-
       // send user click info
       $('#res .g .r a').click(function() {
         var self = $(this);
@@ -120,23 +97,34 @@ const trackSearchInfo = () => {
           index: -1
         });
       });
+
+      // current page is user search page
+      const settings = getSettings();
+      if (!settings.rerank) return;
+
+      initRerank();
     }
   });
 }
 
-if (href === 'https://www.google.com/') {
-  // this page is google homepage
-  chrome.extension.sendRequest({ handler: 'handle_search' }, hResult => {
-    console.log('result', hResult);
 
-    if (!hResult || !hResult.simulate) return;
+function main() {
+  if (href === 'https://www.google.com/') {
+    // this page is google homepage
+    chrome.extension.sendRequest({ handler: 'handle_search' }, hResult => {
+      console.log('result', hResult);
 
-    chrome.extension.sendRequest({ handler: 'simulate_keyword' }, sResult => {
-      if (!sResult.keyword) return;
-      doSearch(sResult.keyword);
+      if (!hResult || !hResult.simulate) return;
+
+      chrome.extension.sendRequest({ handler: 'simulate_keyword' }, sResult => {
+        if (!sResult.keyword) return;
+        doSearch(sResult.keyword);
+      });
     });
-  });
-} else {
-  trackSearchInfo();
+  } else {
+    trackSearchInfo();
+  }
 }
+
+main();
 
