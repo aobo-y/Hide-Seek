@@ -158,7 +158,7 @@ const onRequestHandler = (request, sender, sendResponse) => {
         sendResponse({ simulate: true });
       } else {
         sendResponse({ simulate: false });
-        handleSearch(request);
+        handleSearch(request.query);
       }
       break;
 
@@ -171,11 +171,10 @@ const onRequestHandler = (request, sender, sendResponse) => {
 // handle the search
 var lastSearch;
 
-const handleSearch = async (data, callback, sender) => {
+const handleSearch = async query => {
   const settings = getSettings();
   if (!settings.started) return;
 
-  const query = data.q;
   if (!query) return;
   if (query === lastSearch) return;
 
@@ -195,6 +194,8 @@ const handleSearch = async (data, callback, sender) => {
   patchGenQueries(genQueries);
 
   updateLastSearch(topic, genTopics);
+
+  keywordsPools.push(...genQueries);
 }
 
 
