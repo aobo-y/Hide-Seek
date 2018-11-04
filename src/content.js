@@ -10,10 +10,10 @@ function getQuery() {
   return params.get('q');
 }
 
-function doSearch(keyword) {
+function doSearch(query) {
   const input = document.getElementsByClassName('gLFyf gsfi')[0];
   const submit = document.getElementsByName('btnK')[0];
-  input.value = keyword;
+  input.value = query;
   submit.click();
 }
 
@@ -28,7 +28,7 @@ function initClickTrack() {
       .closest('div').querySelector('.st').textContent;
 
     chrome.runtime.sendMessage({
-      action: "UC",
+      action: "TRACK_SEARCH_CLICK",
       payload: {
         query,
         url,
@@ -108,6 +108,14 @@ function checkIsCtrledTab() {
   });
 }
 
+function getSimulateQuery() {
+  return new Promise(resolve => {
+    chrome.runtime.sendMessage({ action: 'GET_SIMULATE_QUERY'}, res => {
+      resolve(res);
+    });
+  });
+}
+
 function createWarning() {
   const warning = document.createElement('div');
   const wScreen = document.createElement('div');
@@ -127,34 +135,28 @@ async function main() {
     createWarning();
   }
 
-  if (href === 'https://www.google.com/') {
+  if (isCtrledTab && href === 'https://www.google.com/') {
     // this page is google homepage
-    chrome.runtime.sendMessage({ action: 'HANDLE_SEARCH' }, hResult => {
-      console.log('result', hResult);
-
-      if (!hResult || !hResult.simulate) return;
-
-      chrome.runtime.sendMessage({ action: 'SIMULATE_KEYWORD' }, sResult => {
-        if (!sResult.keyword) return;
-        doSearch(sResult.keyword);
-      });
-    });
+    const simQuery = await getSimulateQuery();
+    if (!simQuery) return;
+    doSearch(simQuery);
   } else if (href.indexOf('https://www.google.com/search?') !== -1) {
     const query = getQuery();
 
     if (!query) return;
 
-    chrome.runtime.sendMessage({ action: 'HANDLE_SEARCH', query }, response => {
-      if (response && response.simulate) {
-        simulateClick();
-      } else {
-        initClickTrack();
+    if (isCtrledTab) {
+      simulateClick();
+    } else {
+      chrome.runtime.sendMessage({
+        action: 'TRACK_SEARCH',
+        payload: query
+      });
 
-        // current page is user search page
-        if (!settings.rerank) return;
-        initRerank();
-      }
-    });
+      initClickTrack();
+      if (!settings.rerank) return;
+      initRerank();
+    }
   }
 }
 

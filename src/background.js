@@ -95,7 +95,7 @@ const onMessageHandler = (request, sender, sendResponse) => {
       rerankSearchResultsHandler(request, sendResponse);
       return true;
 
-    case 'UC':
+    case 'TRACK_SEARCH_CLICK':
       updateClickHandler(request.payload);
       return;
 
@@ -103,17 +103,12 @@ const onMessageHandler = (request, sender, sendResponse) => {
       sendResponse(Boolean(simulateTab) && simulateTab.id === sender.tab.id);
       return;
 
-    case 'SIMULATE_KEYWORD':
-      sendResponse({ keyword: simulateKeyword });
+    case 'GET_SIMULATE_QUERY':
+      sendResponse(simulateKeyword);
       return;
 
-    case 'HANDLE_SEARCH':
-      if (simulateTab && simulateTab.id === sender.tab.id) {
-        sendResponse({ simulate: true });
-      } else {
-        sendResponse({ simulate: false });
-        handleSearch(request.query);
-      }
+    case 'TRACK_SEARCH':
+      handleSearch(request.payload);
       return;
 
     default:
