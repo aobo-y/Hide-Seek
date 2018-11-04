@@ -17,8 +17,6 @@ import {
   updateLastSearch
 } from './lib/state';
 
-var rank = 0;
-
 
 const rerankSearchResultsHandler = async (request, sendResponse) => {
   const rerankedOrder = await rerankSearchResults(request.data)
@@ -41,20 +39,14 @@ var simulateSearch = function() {
     return;
   }
 
-  if (!keywordsPools || !keywordsPools.length) {
+  if (!keywordsPools.length) {
     return;
   }
 
-  simulateKeyword = keywordsPools[0];
-  keywordsPools = keywordsPools.slice(1);
-  console.log('simulateKeyword:');
-  console.log('<<< ', simulateKeyword, ' >>>');
-  chrome.tabs.create({ url: 'https://www.google.com/', active: false }, function(tab) {
+  chrome.tabs.create({ url: 'https://www.google.com/', active: false }, tab => {
     simulateTab = tab;
-    setTimeout(function() {
-      chrome.tabs.remove(tab.id, function() {
-        if (chrome.runtime.lastError) {} else {}
-      });
+    setTimeout(() => {
+      chrome.tabs.remove(tab.id);
       if (simulateTab && simulateTab.id === tab.id) {
         simulateTab = undefined;
         simulateSearch();
@@ -65,17 +57,8 @@ var simulateSearch = function() {
 
 // post simulation data back to database
 const onTabUpdateHandler = (tabId, changeInfo, tab) => {
-  var title = changeInfo.title;
   if (simulateTab && simulateTab.id === tabId && changeInfo.status && changeInfo.status === 'complete') {
-    // if (simulateTab && simulateTab.id === tabId && title) {
-    if (tab.url.indexOf('www.google.com') == -1) {
-      simulateClick({
-        query: simulateKeyword,
-        click: rank,
-        url: tab.url,
-        content: tab.title
-      });
-
+    if (tab.url.indexOf('www.google.com') === -1) {
       try {
         chrome.tabs.remove(tab.id, function() {
           if (chrome.runtime.lastError) {} else {}
@@ -87,6 +70,10 @@ const onTabUpdateHandler = (tabId, changeInfo, tab) => {
       }
     }
   }
+}
+
+function getSimulateQuery(sendResponse) {
+  sendResponse(keywordsPools.shift())
 }
 
 const onMessageHandler = (request, sender, sendResponse) => {
@@ -104,11 +91,15 @@ const onMessageHandler = (request, sender, sendResponse) => {
       return;
 
     case 'GET_SIMULATE_QUERY':
-      sendResponse(simulateKeyword);
+      getSimulateQuery(sendResponse);
       return;
 
     case 'TRACK_SEARCH':
       handleSearch(request.payload);
+      return;
+
+    case 'SIMULATE_CLICK':
+      simulateClick(request.payload);
       return;
 
     default:
@@ -147,6 +138,30 @@ const handleSearch = async query => {
   keywordsPools.push(...genQueries);
 }
 
+// temporary test
+function allowFrame() {
+  chrome.webRequest.onHeadersReceived.addListener(details => {
+    var headers = details.responseHeaders.filter(header => {
+      const name = header.name.toLowerCase();
+      return ![
+        'x-frame-options',
+        'frame-options',
+        'content-security-policy'
+      ].includes(name);
+    });
+
+    return {responseHeaders: headers};
+  }, {
+    urls: [ '*://*/*' ], // Pattern to match all http(s) pages
+    types: [ 'sub_frame' ]
+  },
+  ['blocking', 'responseHeaders']);
+
+  const a = document.createElement('iframe');
+  a.setAttribute('src', 'https://www.google.com');
+  a.setAttribute('styles', 'width: 800px;height: 900px;');
+  document.body.append(a);
+}
 
 async function main() {
   // create user at init
@@ -155,6 +170,7 @@ async function main() {
     updateUser(uid);
   }
 
+  // allowFrame();
   chrome.runtime.onMessage.addListener(onMessageHandler);
   chrome.tabs.onUpdated.addListener(onTabUpdateHandler);
 

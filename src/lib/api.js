@@ -71,14 +71,14 @@ export const simulateClick = async ({
   query,
   click,
   url,
-  content
+  title
 }) => {
   return await callApi('post', {
     action: 'SC',
     query,
     click,
     url,
-    content
+    content: title
   });
 }
 

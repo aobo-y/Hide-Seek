@@ -96,7 +96,19 @@ function simulateClick() {
   if (!linkList.length) return;
 
   const simulateIndex  = Math.floor(Math.random() * linkList.length);
-  linkList[simulateIndex].click();
+  const anchor = linkList[simulateIndex];
+
+  chrome.runtime.sendMessage({
+    action: 'SIMULATE_CLICK',
+    payload: {
+      query: getQuery(),
+      click: 0,
+      url: anchor.getAttribute('href'),
+      title: anchor.textContent
+    }
+  });
+
+  anchor.click();
 }
 
 
