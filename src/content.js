@@ -1,27 +1,53 @@
-import $ from 'jquery';
-
 import {getSettings} from './lib/state';
 
 import './styles/content.css';
 
+const settings = getSettings();
 const href = location.href;
 
-const getQueryString = () => {
+function getQuery() {
   const params = new URLSearchParams(href);
   return params.get('q');
 }
 
-const doSearch = function(keyword) {
+function doSearch(keyword) {
   const input = document.getElementsByClassName('gLFyf gsfi')[0];
   const submit = document.getElementsByName('btnK')[0];
   input.value = keyword;
   submit.click();
 }
 
-const initRerank = () => {
+// send user click info
+function initClickTrack() {
+  const linkOnClickHandler = evt => {
+    const anchor = evt.currentTarget;
+    const url = anchor.getAttribute('href');
+
+    const title = anchor.textContent;
+    const content = anchor.closest('.r').parentElement
+      .closest('div').querySelector('.st').textContent;
+
+    chrome.runtime.sendMessage({
+      action: "UC",
+      payload: {
+        query,
+        url,
+        title,
+        content,
+        click: 0 // no idea wt it is
+      }
+    });
+  };
+
+  Array.from(document.querySelectorAll('#res .g .r > a')).forEach(a => {
+    a.addEventListener('click', linkOnClickHandler);
+  });
+};
+
+function initRerank() {
   const blocks = Array.from(document.querySelectorAll('div.srg'));
   const itemsByBlocks = blocks
-    .map(b => Array.from(b.querySelectorAll(':scope > div.g')))
+    .map(b => Array.from(b.querySelectorAll(':scope > div.g')));
   const blockLength = itemsByBlocks.map(ib => ib.length);
   const items = itemsByBlocks.reduce((prev, curr) => prev.concat(curr));
   const snippets = items.map(i => i.querySelector('span.st').textContent);
@@ -36,6 +62,7 @@ const initRerank = () => {
     });
 
     const rerankBtn = document.createElement('input');
+    rerankBtn.setAttribute('class', 'HS-rerank-btn');
     rerankBtn.setAttribute('type', 'button');
     rerankBtn.setAttribute('value', 'rerank results');
 
@@ -56,59 +83,26 @@ const initRerank = () => {
     const resultStats = document.querySelector('#resultStats');
     resultStats.append(rerankBtn);
   });
-}
+};
 
-const trackSearchInfo = () => {
-  const query = getQueryString();
-  if (!query) return;
+function simulateClick() {
+  // if the link leads to files, like pdf & ppt
+  // the 1st child is a span
+  // otherwise anchor
+  const linkList = Array.from(document.querySelectorAll('#res .g .r'))
+    .map(ele => ele.children[0])
+    .filter(ele => ele.tagName === 'A');
 
-  chrome.extension.sendRequest({ handler: 'handle_search', query }, result => {
-    if (result && result.simulate) {
-      // if the link leads to files, like pdf & ppt
-      // the 1st child is a span
-      // otherwise anchor
-      const linkList = Array.from(document.querySelectorAll('.g .rc > .r'))
-        .map(ele => ele.children[0])
-        .filter(ele => ele.tagName === 'A');
+  if (!linkList.length) return;
 
-      if (!linkList.length) return;
-
-      const simulateIndex  = Math.floor(Math.random() * linkList.length);
-      linkList[simulateIndex].click();
-    } else {
-      // send user click info
-      $('#res .g .r a').click(function() {
-        var self = $(this);
-        var url = self.attr('href');
-        if (url.indexOf('/url?') == 0) {
-          url = decodeURIComponent(getQueryString(url, 'url'));
-        }
-
-        var snip = $(this).parent().closest('div').find(".st").text();
-        var title = self.text();
-        var keyword = $('#lst-ib').val();
-
-        chrome.runtime.sendMessage({
-          action: "UC",
-          content: snip,
-          url: url,
-          title: title,
-          keyword: keyword,
-          index: -1
-        });
-      });
-
-      // current page is user search page
-      const settings = getSettings();
-      if (!settings.rerank) return;
-
-      initRerank();
-    }
-  });
+  const simulateIndex  = Math.floor(Math.random() * linkList.length);
+  linkList[simulateIndex].click();
 }
 
 
 function main() {
+  if (!settings.started) return;
+
   if (href === 'https://www.google.com/') {
     // this page is google homepage
     chrome.extension.sendRequest({ handler: 'handle_search' }, hResult => {
@@ -122,7 +116,21 @@ function main() {
       });
     });
   } else {
-    trackSearchInfo();
+    const query = getQuery();)
+
+    if (!query) return;
+
+    chrome.extension.sendRequest({ handler: 'handle_search', query }, result => {
+      if (result && result.simulate) {
+        simulateClick();
+      } else {
+        initClickTrack();
+
+        // current page is user search page
+        if (!settings.rerank) return;
+        initRerank();
+      }
+    });
   }
 }
 

@@ -1,5 +1,3 @@
-import $ from 'jquery';
-
 import {
   createUser,
   rerankSearchResults,
@@ -22,18 +20,13 @@ import {
 var rank = 0;
 
 const onMessageHandler = (request, sender, sendResponse) => {
-  const settings = getSettings();
-
-  // check content type
   switch (request.action) {
     case 'U':
       rerankSearchResultsHandler(request, sendResponse);
       return true;
 
     case 'UC':
-      if (!settings.started) return;
-
-      updateClickHandler(request);
+      updateClickHandler(request.payload);
       return;
 
     default:
@@ -44,19 +37,11 @@ const onMessageHandler = (request, sender, sendResponse) => {
 const rerankSearchResultsHandler = async (request, sendResponse) => {
   const rerankedOrder = await rerankSearchResults(request.data)
   sendResponse({ data: rerankedOrder });
-}
+};
 
-const updateClickHandler = async request => {
-  await updateClick({
-    query: request.keyword,
-    click: request.index + 1,
-    url: request.url,
-    content: request.title,
-    snip: request.content
-  });
-}
-
-
+const updateClickHandler = async payload => {
+  await updateClick(payload);
+};
 
 
 // simulate search

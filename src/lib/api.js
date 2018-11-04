@@ -54,16 +54,16 @@ export const updateClick = async ({
   query,
   click,
   url,
-  content,
-  snip
+  title,
+  content
 }) => {
   return await callApi('post', {
     action: 'UC',
     query,
     click,
     url,
-    content,
-    snip
+    content: title,
+    snip: content
   });
 }
 
