@@ -100,28 +100,52 @@ function simulateClick() {
 }
 
 
-function main() {
+function checkIsCtrledTab() {
+  return new Promise(resolve => {
+    chrome.runtime.sendMessage({ action: 'IS_CTRLED_TAB'}, res => {
+      resolve(res);
+    });
+  });
+}
+
+function createWarning() {
+  const warning = document.createElement('div');
+  const wScreen = document.createElement('div');
+  warning.setAttribute('class', 'HS-warning');
+  wScreen.setAttribute('class', 'HS-warning-screen');
+  warning.textContent = 'This Tab is controlled by Hide-Seek';
+  document.body.append(wScreen);
+  document.body.append(warning);
+}
+
+async function main() {
   if (!settings.started) return;
+
+  const isCtrledTab = await checkIsCtrledTab();
+
+  if (isCtrledTab) {
+    createWarning();
+  }
 
   if (href === 'https://www.google.com/') {
     // this page is google homepage
-    chrome.extension.sendRequest({ handler: 'handle_search' }, hResult => {
+    chrome.runtime.sendMessage({ action: 'HANDLE_SEARCH' }, hResult => {
       console.log('result', hResult);
 
       if (!hResult || !hResult.simulate) return;
 
-      chrome.extension.sendRequest({ handler: 'simulate_keyword' }, sResult => {
+      chrome.runtime.sendMessage({ action: 'SIMULATE_KEYWORD' }, sResult => {
         if (!sResult.keyword) return;
         doSearch(sResult.keyword);
       });
     });
-  } else {
-    const query = getQuery();)
+  } else if (href.indexOf('https://www.google.com/search?') !== -1) {
+    const query = getQuery();
 
     if (!query) return;
 
-    chrome.extension.sendRequest({ handler: 'handle_search', query }, result => {
-      if (result && result.simulate) {
+    chrome.runtime.sendMessage({ action: 'HANDLE_SEARCH', query }, response => {
+      if (response && response.simulate) {
         simulateClick();
       } else {
         initClickTrack();

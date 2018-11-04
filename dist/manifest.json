@@ -47,16 +47,7 @@
     "js": [
       "content.js"
     ],
-    "matches": [
-      "http://www.google.com.hk/*",
-      "https://www.google.com.hk/*",
-      "http://www.google.com/*",
-      "https://www.google.com/*",
-      "http://www.google.ca/*",
-      "https://www.google.ca/*",
-      "http://www.google.co.uk/*",
-      "https://www.google.co.uk/*"
-    ]
+    "matches": ["<all_urls>"]
   }],
   "omnibox": {
     "keyword": "OMNIBOX-KEYWORD"

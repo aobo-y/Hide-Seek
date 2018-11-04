@@ -19,20 +19,6 @@ import {
 
 var rank = 0;
 
-const onMessageHandler = (request, sender, sendResponse) => {
-  switch (request.action) {
-    case 'U':
-      rerankSearchResultsHandler(request, sendResponse);
-      return true;
-
-    case 'UC':
-      updateClickHandler(request.payload);
-      return;
-
-    default:
-      return;
-  }
-}
 
 const rerankSearchResultsHandler = async (request, sendResponse) => {
   const rerankedOrder = await rerankSearchResults(request.data)
@@ -103,26 +89,35 @@ const onTabUpdateHandler = (tabId, changeInfo, tab) => {
   }
 }
 
+const onMessageHandler = (request, sender, sendResponse) => {
+  switch (request.action) {
+    case 'U':
+      rerankSearchResultsHandler(request, sendResponse);
+      return true;
 
+    case 'UC':
+      updateClickHandler(request.payload);
+      return;
 
-const onRequestHandler = (request, sender, sendResponse) => {
-  switch (request.handler) {
-    // simulate acquired keywords
-    case 'simulate_keyword':
+    case 'IS_CTRLED_TAB':
+      sendResponse(Boolean(simulateTab) && simulateTab.id === sender.tab.id);
+      return;
+
+    case 'SIMULATE_KEYWORD':
       sendResponse({ keyword: simulateKeyword });
-      break;
+      return;
 
-    case 'handle_search':
+    case 'HANDLE_SEARCH':
       if (simulateTab && simulateTab.id === sender.tab.id) {
         sendResponse({ simulate: true });
       } else {
         sendResponse({ simulate: false });
         handleSearch(request.query);
       }
-      break;
+      return;
 
     default:
-      break;
+      return;
   }
 }
 
@@ -166,7 +161,6 @@ async function main() {
   }
 
   chrome.runtime.onMessage.addListener(onMessageHandler);
-  chrome.extension.onRequest.addListener(onRequestHandler);
   chrome.tabs.onUpdated.addListener(onTabUpdateHandler);
 
 

@@ -7,3 +7,49 @@
 .HS-rerank-btn:disabled {
   color: grey;
 }
+
+@keyframes flash {
+  from {
+    color: black;
+  }
+
+  50% {
+    color: #666666;
+  }
+
+  to {
+    color: black;
+  }
+}
+
+.HS-warning {
+  background-color: #0ec9b1;
+  opacity: 1;
+  position: fixed;
+  top: 0;
+  z-index: 9999;
+  padding: 40px 50px;
+  margin: 25% auto;
+  left: 0;
+  right: 0;
+  width: 65%;
+  color: black;
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  white-space: pre-line;
+  animation-duration: 1.5s;
+  animation-name: flash;
+  animation-iteration-count: infinite;
+}
+
+.HS-warning-screen {
+  background-color: black;
+  opacity: .3;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+}
