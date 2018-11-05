@@ -15,6 +15,10 @@ const delay = mili => {
   });
 }
 
+const INIT_URLS = {
+  google: 'https://www.google.com',
+  bing: 'https://www.bing.com'
+};
 
 function ctrledTabReadyHandler(request, sender, sendResponse) {
   if (request.action !== 'CT_READY') return;
@@ -76,7 +80,7 @@ function nextJob() {
   }
 
   const newJob = {
-    query: queue.shift(),
+    ...queue.shift(),
     stage: 0
   };
 
@@ -90,7 +94,7 @@ function nextJob() {
   }, 30 * 1000);
 
   chrome.tabs.update(simulateQueue.tabId, {
-    url: 'https://www.google.com'
+    url: INIT_URLS[currentJob.provider]
   });
 }
 

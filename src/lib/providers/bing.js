@@ -64,16 +64,16 @@ function getSimulateAnchors() {
   // if the link leads to files, like pdf & ppt
   // the 1st child is a span
   // otherwise anchor
-  // return Array.from(document.querySelectorAll('.b_algo h2'))
-  //   .filter(ele => !ele.previousSibling ||  ele.previousSibling.tagName !== 'SPAN')
-  //   .map(ele => ele.querySelector(':scope > a'));
+  return Array.from(document.querySelectorAll('.b_algo h2'))
+    .filter(ele => !ele.previousSibling ||  ele.previousSibling.tagName !== 'SPAN')
+    .map(ele => ele.querySelector(':scope > a'));
 }
 
 function doSearch(query) {
-  // const input = document.getElementsByClassName('gLFyf gsfi')[0];
-  // const submit = document.getElementsByName('btnK')[0];
-  // input.value = query;
-  // submit.click();
+  const input = document.querySelector('input.b_searchbox');
+  const submit = document.querySelector('input.b_searchboxSubmit');
+  input.value = query;
+  submit.click();
 }
 
 function getQuery() {

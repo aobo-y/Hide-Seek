@@ -35,8 +35,7 @@ function getSimulateQuery(sendResponse) {
 
 const onMessageHandler = (request, sender, sendResponse) => {
   switch (request.action) {
-    case 'U':
-      console.log(request)
+    case 'RERANK_RESULTS':
       rerankSearchResultsHandler(request.payload, sendResponse);
       return true;
 
@@ -65,18 +64,12 @@ const onMessageHandler = (request, sender, sendResponse) => {
   }
 }
 
-
-// handle the search
-var lastSearch;
-
-const trackSearch = async query => {
+const trackSearch = async ({query, provider}) => {
   const settings = getSettings();
   if (!settings.started) return;
 
   if (!query) return;
-  if (query === lastSearch) return;
 
-  lastSearch = query;
   const keywords = await queryKeywords({
     query,
     numcover: settings.numcover
@@ -93,7 +86,9 @@ const trackSearch = async query => {
 
   updateLastSearch(topic, genTopics);
 
-  simulateQueue.put(genQueries);
+  simulateQueue.put(genQueries.map(q => {
+    return {query: q, provider};
+  }));
 }
 
 // temporary test

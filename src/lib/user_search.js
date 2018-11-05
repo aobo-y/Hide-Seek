@@ -4,7 +4,6 @@ import {getSettings} from './state';
 const settings = getSettings();
 
 
-
 // send user click info
 function sendSearchClick(searchClick) {
   chrome.runtime.sendMessage({
@@ -18,18 +17,19 @@ function sendSearchClick(searchClick) {
 
 function sendRerankSnippets(snippets, callback) {
   chrome.runtime.sendMessage({
-    action: 'U',
+    action: 'RERANK_RESULTS',
     payload: snippets
   }, callback);
 }
 
 
 function init(provider) {
-  const query = provider.getQuery();
-
   chrome.runtime.sendMessage({
     action: 'TRACK_SEARCH',
-    payload: query
+    payload: {
+      query: provider.getQuery(),
+      provider: provider.name
+    }
   });
 
   provider.initClickTrack(sendSearchClick);
