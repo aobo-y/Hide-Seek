@@ -144,31 +144,41 @@ async function main() {
   const isCtrledTab = await checkIsCtrledTab();
 
   if (isCtrledTab) {
-    createWarning();
-  }
+    console.log('xxxxxxxxxxxxx');
 
-  if (isCtrledTab && href === 'https://www.google.com/') {
-    // this page is google homepage
-    const simQuery = await getSimulateQuery();
-    if (!simQuery) return;
-    doSearch(simQuery);
-  } else if (href.indexOf('https://www.google.com/search?') !== -1) {
+    createWarning();
+
+    chrome.runtime.sendMessage({ action: 'CT_READY'}, response => {
+      console.log(response);
+
+      switch (response.action) {
+        case 'CT_START_SEARCH':
+          window.location = 'https://www.google.com';
+          break;
+
+        case 'CT_SEARCH_QUERY':
+          doSearch(response.payload);
+          break;
+
+        case 'CT_SIMULATE_CLICK':
+          simulateClick();
+          break;
+
+        default:
+          break;
+      }
+    });
+  } else if (href.includes('https://www.google.com/search?')) {
     const query = getQuery();
 
-    if (!query) return;
+    chrome.runtime.sendMessage({
+      action: 'TRACK_SEARCH',
+      payload: query
+    });
 
-    if (isCtrledTab) {
-      simulateClick();
-    } else {
-      chrome.runtime.sendMessage({
-        action: 'TRACK_SEARCH',
-        payload: query
-      });
-
-      initClickTrack();
-      if (!settings.rerank) return;
-      initRerank();
-    }
+    initClickTrack();
+    if (!settings.rerank) return;
+    initRerank();
   }
 }
 

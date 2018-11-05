@@ -17,6 +17,7 @@ import {
   updateLastSearch
 } from './lib/state';
 
+import simulateQueue from './lib/simulate_queue';
 
 const rerankSearchResultsHandler = async (request, sendResponse) => {
   const rerankedOrder = await rerankSearchResults(request.data)
@@ -27,50 +28,6 @@ const updateClickHandler = async payload => {
   await updateClick(payload);
 };
 
-
-// simulate search
-var keywordsPools = [];
-var simulateKeyword;
-var simulateTab;
-var simulateSearch = function() {
-  const settings = getSettings();
-
-  if (simulateTab) {
-    return;
-  }
-
-  if (!keywordsPools.length) {
-    return;
-  }
-
-  chrome.tabs.create({ url: 'https://www.google.com/', active: false }, tab => {
-    simulateTab = tab;
-    setTimeout(() => {
-      chrome.tabs.remove(tab.id);
-      if (simulateTab && simulateTab.id === tab.id) {
-        simulateTab = undefined;
-        simulateSearch();
-      }
-    }, settings.smlt_to * 1000);
-  });
-}
-
-// post simulation data back to database
-const onTabUpdateHandler = (tabId, changeInfo, tab) => {
-  if (simulateTab && simulateTab.id === tabId && changeInfo.status && changeInfo.status === 'complete') {
-    if (tab.url.indexOf('www.google.com') === -1) {
-      try {
-        chrome.tabs.remove(tab.id, function() {
-          if (chrome.runtime.lastError) {} else {}
-        });
-      } catch (e) {}
-      if (simulateTab && simulateTab.id === tab.id) {
-        simulateTab = undefined;
-        simulateSearch();
-      }
-    }
-  }
-}
 
 function getSimulateQuery(sendResponse) {
   sendResponse(keywordsPools.shift())
@@ -87,7 +44,7 @@ const onMessageHandler = (request, sender, sendResponse) => {
       return;
 
     case 'IS_CTRLED_TAB':
-      sendResponse(Boolean(simulateTab) && simulateTab.id === sender.tab.id);
+      sendResponse(simulateQueue.tabId === sender.tab.id);
       return;
 
     case 'GET_SIMULATE_QUERY':
@@ -95,7 +52,7 @@ const onMessageHandler = (request, sender, sendResponse) => {
       return;
 
     case 'TRACK_SEARCH':
-      handleSearch(request.payload);
+      trackSearch(request.payload);
       return;
 
     case 'SIMULATE_CLICK':
@@ -111,7 +68,7 @@ const onMessageHandler = (request, sender, sendResponse) => {
 // handle the search
 var lastSearch;
 
-const handleSearch = async query => {
+const trackSearch = async query => {
   const settings = getSettings();
   if (!settings.started) return;
 
@@ -135,7 +92,7 @@ const handleSearch = async query => {
 
   updateLastSearch(topic, genTopics);
 
-  keywordsPools.push(...genQueries);
+  simulateQueue.put(genQueries);
 }
 
 // temporary test
@@ -172,16 +129,6 @@ async function main() {
 
   // allowFrame();
   chrome.runtime.onMessage.addListener(onMessageHandler);
-  chrome.tabs.onUpdated.addListener(onTabUpdateHandler);
-
-
-  // check if user makes a google search every 5 seconds
-  setInterval(() => {
-    const settings = getSettings();
-    if (!settings.started) return;
-
-    simulateSearch();
-  }, 5 * 1000);
 }
 
 main().catch(err => { throw err; });
