@@ -24,40 +24,47 @@ function initClickTrack(trackCallback) {
 
 
 function initRerank(getRerank) {
-  // const blocks = Array.from(document.querySelectorAll('div.srg'));
-  // const itemsByBlocks = blocks
-  //   .map(b => Array.from(b.querySelectorAll(':scope > div.g')));
-  // const blockLength = itemsByBlocks.map(ib => ib.length);
-  // const items = itemsByBlocks.reduce((prev, curr) => prev.concat(curr));
-  // const snippets = items.map(i => i.querySelector('span.st').textContent);
+  const block = document.querySelector('#b_results');
+  const items = Array.from(document.querySelectorAll('#b_results li.b_algo'));
+  const snippets = items.map(i => {
+    const p = i.querySelector('.b_caption p');
+    if (p) return p.textContent;
 
-  // getRerank(snippets, newOrder => {
-  //   const sortedItems = [...items].sort(function(a, b) {
-  //     return newOrder[items.indexOf(a)] - newOrder[items.indexOf(b)];
-  //   });
+    const lc = i.querySelector('div.lisn_content');
+    if (lc) return lc.textContent;
 
-  //   const rerankBtn = document.createElement('input');
-  //   rerankBtn.setAttribute('class', 'HS-rerank-btn');
-  //   rerankBtn.setAttribute('type', 'button');
-  //   rerankBtn.setAttribute('value', 'rerank results');
+    return '';
+  });
 
-  //   rerankBtn.onclick = () => {
-  //     let startIndex = 0;
-  //     blocks.forEach((block, index) => {
-  //       const length = blockLength[index];
-  //       sortedItems.slice(startIndex, length).forEach(item => {
-  //         block.append(item);
-  //       });
+  getRerank(snippets, newOrder => {
+    const sortedItems = [...items].sort(function(a, b) {
+      return newOrder[items.indexOf(a)] - newOrder[items.indexOf(b)];
+    });
 
-  //       startIndex = length;
-  //     });
+    const rerankBtn = document.createElement('input');
+    rerankBtn.setAttribute('class', 'HS-rerank-btn');
+    rerankBtn.setAttribute('type', 'button');
+    rerankBtn.setAttribute('value', 'rerank results');
 
-  //     rerankBtn.toggleAttribute('disabled');
-  //   };
+    rerankBtn.onclick = () => {
+      let i = 0;
+      const newChildren = Array.from(block.children).map(c => {
+        if (c.className.includes('b_algo')) {
+          return sortedItems[i++];
+        }
+        return c;
+      });
 
-  //   const resultStats = document.querySelector('#resultStats');
-  //   resultStats.append(rerankBtn);
-  // });
+      newChildren.forEach(child => {
+        block.append(child);
+      });
+
+      rerankBtn.toggleAttribute('disabled');
+    };
+
+    const resultStats = document.querySelector('#b_tween');
+    resultStats.append(rerankBtn);
+  });
 };
 
 function getSimulateAnchors() {
