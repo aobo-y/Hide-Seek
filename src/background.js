@@ -19,9 +19,9 @@ import {
 
 import simulateQueue from './lib/simulate_queue';
 
-const rerankSearchResultsHandler = async (request, sendResponse) => {
-  const rerankedOrder = await rerankSearchResults(request.data)
-  sendResponse({ data: rerankedOrder });
+const rerankSearchResultsHandler = async (payload, sendResponse) => {
+  const rerankedOrder = await rerankSearchResults(payload)
+  sendResponse(rerankedOrder);
 };
 
 const updateClickHandler = async payload => {
@@ -36,7 +36,8 @@ function getSimulateQuery(sendResponse) {
 const onMessageHandler = (request, sender, sendResponse) => {
   switch (request.action) {
     case 'U':
-      rerankSearchResultsHandler(request, sendResponse);
+      console.log(request)
+      rerankSearchResultsHandler(request.payload, sendResponse);
       return true;
 
     case 'TRACK_SEARCH_CLICK':
