@@ -40,11 +40,9 @@ function initRerank(getRerank) {
   // reinit when query changes
   _onQueryChange(() => {
     const cont = document.querySelector('.sb_count').textContent;
-    console.log(cont)
     // pooling to check if page is indeed updated
     const interval = setInterval(() => {
       const newCont = document.querySelector('.sb_count').textContent;
-      console.log(newCont);
       if (newCont !== cont) {
         initRerank(getRerank);
         clearInterval(interval);
