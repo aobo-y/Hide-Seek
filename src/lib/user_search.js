@@ -22,16 +22,19 @@ function sendRerankSnippets(snippets, callback) {
   }, callback);
 }
 
-
-function init(provider) {
+function sendSearch(query, providerName) {
   chrome.runtime.sendMessage({
     action: 'TRACK_SEARCH',
     payload: {
-      query: provider.getQuery(),
-      provider: provider.name
+      query: query,
+      provider: providerName
     }
   });
+}
 
+
+function init(provider) {
+  provider.initSearchTrack(sendSearch);
   provider.initClickTrack(sendSearchClick);
   if (!settings.rerank) return;
   provider.initRerank(sendRerankSnippets);

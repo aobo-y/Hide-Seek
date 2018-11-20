@@ -1,4 +1,8 @@
+const NAME = 'google';
 
+function initSearchTrack(searchCallback) {
+  searchCallback(getQuery(), NAME);
+}
 
 // send user click info
 function initClickTrack(trackCallback) {
@@ -89,7 +93,8 @@ function inSearchResults() {
 }
 
 export default {
-  name: 'google',
+  name: NAME,
+  initSearchTrack,
   initClickTrack,
   initRerank,
   getSimulateAnchors,

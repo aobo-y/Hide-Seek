@@ -1,4 +1,17 @@
+const NAME = 'bing';
 
+function _onQueryChange(callback) {
+  const form = document.querySelector('#sb_form');
+  form.addEventListener('submit', callback);
+}
+
+function initSearchTrack(searchCallback) {
+  searchCallback(getQuery(), NAME);
+
+  _onQueryChange(() => {
+    searchCallback(getQuery(), NAME);
+  });
+}
 
 // send user click info
 function initClickTrack(trackCallback) {
@@ -24,6 +37,22 @@ function initClickTrack(trackCallback) {
 
 
 function initRerank(getRerank) {
+  // reinit when query changes
+  _onQueryChange(() => {
+    const cont = document.querySelector('.sb_count').textContent;
+    console.log(cont)
+    // pooling to check if page is indeed updated
+    const interval = setInterval(() => {
+      const newCont = document.querySelector('.sb_count').textContent;
+      console.log(newCont);
+      if (newCont !== cont) {
+        initRerank(getRerank);
+        clearInterval(interval);
+      }
+    }, 1000);
+  });
+
+
   const block = document.querySelector('#b_results');
   const items = Array.from(document.querySelectorAll('#b_results li.b_algo'));
   const snippets = items.map(i => {
@@ -94,7 +123,8 @@ function inSearchResults() {
 }
 
 export default {
-  name: 'bing',
+  name: NAME,
+  initSearchTrack,
   initClickTrack,
   initRerank,
   getSimulateAnchors,
