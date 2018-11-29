@@ -31,12 +31,19 @@ function simulateClick(query, anchors) {
   anchor.click();
 }
 
-function init(provider) {
+function delay(dur) {
+  return new Promise(res => {
+    setTimeout(res, dur);
+  })
+}
+
+async function init(provider) {
   createWarning();
 
+  const randomDelay = Math.random() * 4 + 2 // 2 - 6 s
+  await delay(randomDelay * 1000);
+
   chrome.runtime.sendMessage({ action: 'CT_READY'}, response => {
-
-
     switch (response.action) {
       case 'CT_SEARCH_QUERY':
         provider.doSearch(response.payload);

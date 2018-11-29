@@ -6,7 +6,6 @@ import {getProvider} from './lib/providers';
 
 import './styles/content.css';
 
-const url = location.href;
 const settings = getSettings();
 
 
